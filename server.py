@@ -93,18 +93,20 @@ def event_loop():
 def out_all(file):
     try:
         my_table = PrettyTable(["id", "first_name", "last_name", "age", "city", "phone", "email", "birthday"])
-        my_file = open(file, encoding='utf8')
+        print("до чтения")
+        my_file = open(r'C:\Users\kolpa\PycharmProjects\Extask\server_files\data_low.csv', encoding='utf8')
+        print("после чтения")
         s: list = my_file.readlines()
         a: int = 0
 
         while a < len(s):
             line: str = len(s[a])
             if a + 1 == len(s):
-                id, name, surname, age, city, phone, email, birthday = map(str, s[a].split(","))
+                id, name, surname, age, city, phone, email, birthday = map(str, s[a].split(";"))
                 my_table.add_row([id, name, surname, age, city, phone, email, birthday])
             else:
                 remove_last: str = s[a][:line - 1]
-                id, name, surname, age, city, phone, email, birthday = map(str, remove_last.split(","))
+                id, name, surname, age, city, phone, email, birthday = map(str, remove_last.split(";"))
                 my_table.add_row([id, name, surname, age, city, phone, email, birthday])
             a += 1
         print(my_table)
