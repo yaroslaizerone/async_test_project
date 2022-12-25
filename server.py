@@ -1,9 +1,11 @@
+import os
 import re
 import socket
 from select import select
 from os import listdir
 from os.path import isfile, join
 from prettytable import PrettyTable
+from pathlib import Path
 tasks = []
 to_read = {}
 to_write = {}
@@ -38,6 +40,7 @@ def process_client(cl_socket: socket, remote_address):
         yield ('read', cl_socket)
         # получаем данные из сокета
         message = cl_socket.recv(1024).decode()
+        dict = r'C:\Users\kolpa\PycharmProjects\Extask\server_files'
         pattern = re.compile(r'ALL')
         if pattern.findall(message):
             result = 0
@@ -47,7 +50,6 @@ def process_client(cl_socket: socket, remote_address):
             break
         else:
             if message == 'FILES':
-                dict = r'C:\Users\kolpa\PycharmProjects\Extask\server_files'
                 onlyfiles = [f for f in listdir(dict) if isfile(join(dict, f))]
                 for file in onlyfiles:
                     print(file)
@@ -57,12 +59,22 @@ def process_client(cl_socket: socket, remote_address):
             elif result == 0:
                 item_search = re.search(r'ALL', message)
                 file = str(message.split("FILE ", 1)[1])
+
                 if item_search.group(0) == "ALL":
-                    out_all(file)
+                    #out_all(file)
+                    a=1
             else:
-                item_search = re.search(r'\d{1,2}', message)
-                file = str(message.split("FILE ", 1)[1])
-                out_row(item_search.group(0), file)
+                test = re.search(r'-\d{1,2}', message)
+                if test is None:
+                    item_search = re.search(r'\d{1,2}', message)
+                    file = str(message.split("FILE ", 1)[1])
+                    out_row(int(item_search.group(0)), file)
+                else:
+                    item_search = re.search(r'\d{1,2}', message)
+                    file = str(message.split("FILE ", 1)[1])
+                    count: int = int(item_search.group(0)) * -1
+                    print(count)
+                    out_row(count, file)
             # отправляем результат клиенту
             cl_socket.send(message.encode())
     cl_socket.close()
@@ -93,9 +105,7 @@ def event_loop():
 def out_all(file):
     try:
         my_table = PrettyTable(["id", "first_name", "last_name", "age", "city", "phone", "email", "birthday"])
-        print("до чтения")
         my_file = open(r'C:\Users\kolpa\PycharmProjects\Extask\server_files\data_low.csv', encoding='utf8')
-        print("после чтения")
         s: list = my_file.readlines()
         a: int = 0
 
@@ -120,23 +130,24 @@ def out_all(file):
 def out_row(row, file):
     try:
         my_table = PrettyTable(["id", "first_name", "last_name", "age", "city", "phone", "email", "birthday"])
-        my_file = open(file, encoding='utf8')
+        my_file = open(r'C:\Users\kolpa\PycharmProjects\Extask\server_files\data_low.csv', encoding='utf8')
         s: list = my_file.readlines()
         length_list = len(s)
         a: int = 0
         if row < 0:
-            a = length_list-row
+            a = length_list+row
+            print(a)
         else:
             length_list = row
 
         while a < length_list:
             line: str = len(s[a])
             if a + 1 == len(s):
-                id, name, surname, age, city, phone, email, birthday = map(str, s[a].split(","))
+                id, name, surname, age, city, phone, email, birthday = map(str, s[a].split(";"))
                 my_table.add_row([id, name, surname, age, city, phone, email, birthday])
             else:
                 remove_last: str = s[a][:line - 1]
-                id, name, surname, age, city, phone, email, birthday = map(str, remove_last.split(","))
+                id, name, surname, age, city, phone, email, birthday = map(str, remove_last.split(";"))
                 my_table.add_row([id, name, surname, age, city, phone, email, birthday])
             a += 1
         print(my_table)
